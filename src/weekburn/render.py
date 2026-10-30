@@ -279,29 +279,39 @@ def print_report(r: Report, console) -> None:
         highlight=False,
     )
 
-    table = Table(title=f"Top {len(r.top)} sessions by tokens", box=box.SIMPLE_HEAVY, title_justify="left")
-    for col, just in [
-        ("#", "right"), ("Session", "left"), ("Project", "left"), ("Started", "left"), ("Model", "left"),
-        ("Tokens", "right"), ("Share", "right"), ("Msgs", "right"), ("Cache read", "right"),
-        ("Subagent", "right"), ("Tags", "left"),
-    ]:
+    # Columns appear as the terminal gets wider: 0 = always, 1 = 100+ columns, 2 = 140+ columns.
+    tier = 2 if console.width >= 140 else 1 if console.width >= 100 else 0
+    columns = [
+        ("#", "right", 0, lambda i, s: str(i)),
+        ("Session", "left", 0, lambda i, s: short_id(s.session_id)),
+        ("Project", "left", 0, lambda i, s: escape(s.project) or "-"),
+        ("Started", "left", 1, lambda i, s: fmt_day(s.start)),
+        ("Model", "left", 2, lambda i, s: escape(s.main_model)),
+        ("Tokens", "right", 0, lambda i, s: fmt_tokens(s.total)),
+        ("Share", "right", 2, lambda i, s: fmt_pct(s.total / t)),
+        ("Msgs", "right", 0, lambda i, s: str(s.user_messages)),
+        ("Cache read", "right", 1, lambda i, s: fmt_pct(s.cache_read_share, 0)),
+        ("Subagent", "right", 1, lambda i, s: fmt_pct(s.subagent_share, 0)),
+        ("Tags", "left", 0, lambda i, s: ", ".join(s.tags) or "-"),
+    ]
+    columns = [c for c in columns if c[2] <= tier]
+    console.print(f"[italic]Top {len(r.top)} sessions by tokens[/italic]", highlight=False)
+    table = Table(box=box.SIMPLE_HEAVY)
+    for name, just, _, _ in columns:
         table.add_column(
-            col,
+            name,
             justify=just,
-            no_wrap=col not in ("Tags", "Project"),
-            min_width=14 if col == "Tags" else None,
-            max_width=18 if col == "Project" else None,
+            no_wrap=name not in ("Tags", "Project"),
+            min_width=16 if name == "Tags" else None,
+            max_width=16 if name == "Project" else None,
+            overflow="fold" if name == "Project" else "ellipsis",
         )
     for i, s in enumerate(r.top, 1):
-        table.add_row(
-            str(i), short_id(s.session_id), escape(s.project) or "-", fmt_day(s.start), escape(s.main_model),
-            fmt_tokens(s.total), fmt_pct(s.total / t), str(s.user_messages),
-            fmt_pct(s.cache_read_share, 0), fmt_pct(s.subagent_share, 0),
-            ", ".join(s.tags) or "-",
-        )
+        table.add_row(*(get(i, s) for _, _, _, get in columns))
     console.print(table)
 
-    causes = Table(title="Share of tokens by cause (tags overlap)", box=box.SIMPLE_HEAVY, title_justify="left")
+    console.print("[italic]Share of tokens by cause (tags overlap)[/italic]", highlight=False)
+    causes = Table(box=box.SIMPLE_HEAVY)
     causes.add_column("Cause")
     causes.add_column("Sessions", justify="right")
     causes.add_column("Tokens", justify="right")
@@ -320,7 +330,8 @@ def print_compare(c: Comparison, console) -> None:
     from rich.table import Table
 
     b, a = c.before, c.after
-    head = Table(box=box.SIMPLE_HEAVY, title="Periods", title_justify="left")
+    console.print("[italic]Periods[/italic]", highlight=False)
+    head = Table(box=box.SIMPLE_HEAVY)
     head.add_column("")
     head.add_column("Before", justify="right")
     head.add_column("After", justify="right")
@@ -338,11 +349,12 @@ def print_compare(c: Comparison, console) -> None:
             c.trimmed_metrics,
         ),
     ):
-        t = Table(box=box.SIMPLE_HEAVY, title=title, title_justify="left")
+        console.print(f"[italic]{title}[/italic]", highlight=False)
+        t = Table(box=box.SIMPLE_HEAVY)
         t.add_column("Metric")
-        t.add_column("Before", justify="right")
-        t.add_column("After", justify="right")
-        t.add_column("Change", justify="right")
+        t.add_column("Before", justify="right", no_wrap=True)
+        t.add_column("After", justify="right", no_wrap=True)
+        t.add_column("Change", justify="right", no_wrap=True)
         for m in metrics:
             change = f"[bold]{change_text(m)}[/bold]" if m.clear_change else change_text(m)
             t.add_row(

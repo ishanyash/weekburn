@@ -129,3 +129,5 @@ def test_project_name_is_folder_name_only(projects):
     path = Session(projects).request(T0).write()
     data = parse_files([path])
     assert data.requests[0].project == "secret-project"
+    win = Session(projects, cwd="C:\\Users\\bob\\work\\shop-api\\").request(T0).write()
+    assert parse_files([win]).requests[0].project == "shop-api"

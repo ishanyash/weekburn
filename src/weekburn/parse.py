@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -132,6 +133,13 @@ def _int(value: object) -> int:
     return 0
 
 
+def _folder_name(cwd: object) -> str:
+    """Last part of a working directory, for Windows and POSIX paths alike."""
+    if not isinstance(cwd, str) or not cwd:
+        return ""
+    return re.split(r"[\\/]", cwd.rstrip("\\/"))[-1]
+
+
 def _message_text(content: object) -> tuple[bool, str]:
     """Return (is_typed_message, text) for the content of a "user" record."""
     if isinstance(content, str):
@@ -236,7 +244,7 @@ def _add_request(
     effort = effort.lower() if isinstance(effort, str) and effort else None
     model = msg.get("model") or rec.get("requestedModel") or "unknown"
     cwd = rec.get("cwd")
-    project = Path(cwd).name if isinstance(cwd, str) and cwd else ""
+    project = _folder_name(cwd)
 
     existing = by_key.get(key)
     if existing is None:
