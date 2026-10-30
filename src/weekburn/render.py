@@ -268,13 +268,15 @@ def print_report(r: Report, console) -> None:
     console.print(
         f"[bold]WeekBurn[/bold]  {fmt_day(r.start)} to {fmt_day(r.end)}   "
         f"{n_sessions} sessions, {r.requests:,} requests, {r.user_messages:,} user messages, "
-        f"[bold]{fmt_tokens(r.total_tokens)}[/bold] tokens"
+        f"[bold]{fmt_tokens(r.total_tokens)}[/bold] tokens",
+        highlight=False,
     )
     console.print(
         f"Cache read {fmt_pct(r.cache_read_tokens / t)}  ·  cache write {fmt_pct(r.cache_write_tokens / t)}  ·  "
         f"input {fmt_pct(r.input_tokens / t)}  ·  output {fmt_pct(r.output_tokens / t)}  ·  "
         f"from subagents {fmt_pct(r.subagent_tokens / t)}",
         style="dim",
+        highlight=False,
     )
 
     table = Table(title=f"Top {len(r.top)} sessions by tokens", box=box.SIMPLE_HEAVY, title_justify="left")
@@ -283,7 +285,13 @@ def print_report(r: Report, console) -> None:
         ("Tokens", "right"), ("Share", "right"), ("Msgs", "right"), ("Cache read", "right"),
         ("Subagent", "right"), ("Tags", "left"),
     ]:
-        table.add_column(col, justify=just, no_wrap=col not in ("Tags", "Project"))
+        table.add_column(
+            col,
+            justify=just,
+            no_wrap=col not in ("Tags", "Project"),
+            min_width=14 if col == "Tags" else None,
+            max_width=18 if col == "Project" else None,
+        )
     for i, s in enumerate(r.top, 1):
         table.add_row(
             str(i), short_id(s.session_id), escape(s.project) or "-", fmt_day(s.start), escape(s.main_model),
@@ -303,7 +311,7 @@ def print_report(r: Report, console) -> None:
     console.print(causes)
     if not r.effort_recorded:
         console.print("No effort level is recorded in these transcripts, so the high effort tag is off.", style="dim")
-    console.print(PLAN_NOTE, style="dim")
+    console.print(PLAN_NOTE, style="dim", highlight=False)
 
 
 def print_compare(c: Comparison, console) -> None:
@@ -346,7 +354,7 @@ def print_compare(c: Comparison, console) -> None:
         console.print(t)
 
     for w in c.warnings:
-        console.print(f"Warning: {w}", style="yellow")
+        console.print(f"Warning: {w}", style="yellow", highlight=False)
     lines = verdict_lines(c)
     console.print(Panel(f"[bold]{lines[0]}[/bold]\n{lines[1]}\n[dim]{lines[2]}[/dim]", title="Verdict", expand=False))
-    console.print(PLAN_NOTE, style="dim")
+    console.print(PLAN_NOTE, style="dim", highlight=False)
