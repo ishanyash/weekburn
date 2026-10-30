@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.11", "3.12", "3.13"]
+        include:
+          - os: macos-latest
+            python: "3.13"
+          - os: windows-latest
+            python: "3.13"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install ".[test]"
+      - run: python -m pytest -rs
+
+  clean-install:
+    name: pipx install from the built wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install build
+          python -m build
+      - name: Install with pipx into a fresh environment
+        run: |
+          python -m pip install pipx
+          pipx install dist/*.whl
+          weekburn --version
+      - name: Run on demo transcripts
+        run: |
+          python scripts/make_demo_data.py "$RUNNER_TEMP/projects"
+          weekburn report --since 7d --projects-dir "$RUNNER_TEMP/projects"
+          weekburn report --since 7d --markdown --projects-dir "$RUNNER_TEMP/projects" > report.md
+          end=$(date -u +%F); mid=$(date -u -d '-7 day' +%F); a=$(date -u -d '-6 day' +%F); b0=$(date -u -d '-13 day' +%F)
+          weekburn compare --before "$b0:$mid" --after "$a:$end" --projects-dir "$RUNNER_TEMP/projects"
+          weekburn compare --before "$b0:$mid" --after "$a:$end" --markdown --projects-dir "$RUNNER_TEMP/projects" > compare.md
+          ! grep -E "demo prompt|/demo/|$RUNNER_TEMP" report.md compare.md
+          cat report.md compare.md
