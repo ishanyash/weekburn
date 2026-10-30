@@ -17,7 +17,7 @@ WeekBurn reads the transcripts Claude Code already keeps on your computer. It ma
 
 ## Why
 
-In late October 2026 many people reported that their Claude Code weekly limit was draining much faster than before (for example [#105240](https://github.com/anthropics/claude-code/issues/105240)). Anthropic's Claude Code team said it found no single root cause and no regression in Claude Code, and pointed to one or two heavy sessions (xhigh effort, `/goal`, Workflows, Agent Teams, long SDK jobs) and to subagents that inherit the parent's effort level ([summary](https://sysnote.net/news/claude-code-usage-draining-fast-anthropic-found-no-regression-blames-heavy-sessi)).
+In late October 2026 many people reported that their Claude Code weekly limit was draining much faster than before (for example [#105240](https://github.com/anthropics/claude-code/issues/105240)). Anthropic's Claude Code team said it found no single root cause and no regression in Claude Code (it did find a few smaller issues and is rolling out fixes), and pointed to one or two heavy sessions (xhigh effort, `/goal`, Workflows, Agent Teams, long SDK jobs) and to subagents that inherit the parent's effort level ([summary](https://sysnote.net/news/claude-code-usage-draining-fast-anthropic-found-no-regression-blames-heavy-sessi)).
 
 That leaves one question for each user: is it me, or the meter? WeekBurn answers the part you can answer from local files, and gives you a short, counts-only report you can paste into a GitHub issue.
 
