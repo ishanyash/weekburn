@@ -37,6 +37,8 @@ weekburn report --since 7d --markdown > report.md
 weekburn compare --before 2026-10-10:2026-10-16 --after 2026-10-24:2026-10-30 --markdown > compare.md
 ```
 
+No pipx yet? On macOS run `brew install pipx && pipx ensurepath`. Anywhere else run `python3 -m pip install --user pipx && python3 -m pipx ensurepath`. Then open a new terminal. WeekBurn needs Python 3.11 or newer.
+
 `--since` takes `7d`, `48h`, `2w` or a date like `2026-10-20`. `--before` and `--after` take whole days in your computer's time zone, first and last day included. If your transcripts live somewhere else, add `--projects-dir PATH`.
 
 ## What you get
